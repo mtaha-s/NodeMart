@@ -1,5 +1,5 @@
 import fs from "fs";
-import { supabase } from "../supabaseClient.js";
+import { supabase } from "../Services/supabaseClient.js";
 
 export const uploadFile = async (req, res) => {
   try {

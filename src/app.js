@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import uploadRoutes from "./routes/upload.route.js";
 
 const app = express();
 
@@ -14,7 +15,7 @@ app.use(express.urlencoded({extended: true}))
 app.use(express.static("public"))
 app.use(cookieParser());
 
-//routes declaration
+//routes
 app.use('/api', uploadRoutes);
 
 export { app };
