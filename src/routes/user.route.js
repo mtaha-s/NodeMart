@@ -1,11 +1,19 @@
-import { Router } from 'express';
-import { registerUser, loginUser, getCurrentUser, logoutUser } from '../controllers/user.controller.js';
+import express from "express";
+import {registerUser, loginUser, logoutUser, getCurrentUser, changeUserPassword, refreshAccessToken, updateUserAvatar, generateAccessAndRefereshTokens} from "../controllers/user.controller.js";
+// import { verifyJWT } from "../middlewares/auth.middleware.js";
 
-const router = Router();
+const authenticationRoutes = express.Router();
 
-router.route("/register").post(registerUser);
-router.route("/login").post(loginUser);
-router.route("/currentUser").get(getCurrentUser);
-router.route("/logout").post(logoutUser);
+// Auth & user management routes
+authenticationRoutes.post("/register", registerUser);
+authenticationRoutes.post("/login", loginUser);
+// router.post("/logout", verifyJWT, logoutUser);
+// router.get("/currentUser", verifyJWT, getCurrentUser);
+// router.post("/changeUserPassword", verifyJWT, changeUserPassword);
+// router.post("/refreshToken", refreshAccessToken);
+// router.post("/generateTokens", generateAccessAndRefereshTokens);
 
-export default router;
+// Avatar update route (protected)
+// router.patch("/updateAvatar", verifyJWT, upload.single("avatar"), updateUserAvatar);
+
+export { authenticationRoutes };

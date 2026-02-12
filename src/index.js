@@ -1,8 +1,6 @@
 import dotenv from "dotenv";
-import connectDB from "./database/database.js";
-import express from 'express';
-import uploadRoutes from './routes/upload.route.js';
-import {app} from "./app.js";
+import { connectDB } from "./database/database.js";
+import { app } from "./app.js";
 
 dotenv.config({
     path: './.env'
