@@ -20,7 +20,6 @@ app.use(cookieParser());
 
 //routes declerations
 app.use("/api/users", authenticationRoutes)
-// app.use("/api", uploadRoutes)
 
 // Health check route
 app.get("/", (req, res) => { res.status(200).json({ message: "Server is running" }); });
