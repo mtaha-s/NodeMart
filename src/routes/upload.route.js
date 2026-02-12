@@ -1,8 +1,9 @@
-import express from 'express';
-import { uploadFile } from '../controllers/upload.controller.js';
+import express from "express";
+import { upload } from "../middlewares/upload.middleware.js";
+import { uploadFile } from "../controllers/upload.controller.js";
 
 const router = express.Router();
 
-router.post('/upload', uploadFile);
+router.post("/upload", upload.single("file"), uploadFile);
 
 export default router;
