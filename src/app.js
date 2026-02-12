@@ -12,6 +12,12 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(express.static("public"))
-// app.use(express.cookieParser)
+app.use(cookieParser());
+
+//routes import
+import uploadRoutes from './routes/upload.route.js';
+
+//routes declaration
+app.use('/api', uploadRoutes);
 
 export { app };
