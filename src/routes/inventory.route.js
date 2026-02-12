@@ -3,7 +3,6 @@ import {createInventoryItem, getAllInventory, getInventoryById, updateInventoryI
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
-
 const inventoryRoutes = express.Router();
 
 inventoryRoutes.post("/", verifyJWT, upload.single("image"), createInventoryItem);
