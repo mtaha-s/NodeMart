@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
 import connectDB from "./database/database.js";
+import express from 'express';
+import uploadRoutes from './routes/upload.route.js';
 import {app} from "./app.js";
 
 dotenv.config({
@@ -15,3 +17,7 @@ connectDB()
 .catch((err) => {
     console.log("MONGO db connection failed !!! ", err);
 })
+
+const app = express();
+
+app.use('/api', uploadRoutes);
