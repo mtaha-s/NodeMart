@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     avatar:         { type: String },
     role:           { type: String, enum: ['admin', 'staff', 'user', 'vendor'], default: 'user' },
     isActive:       { type: Boolean, default: true },
-    REFRESH_TOKEN:  { type: String },
+    RefreshToken:   { type: String },
     lastLogin:      { type: Date },
 }, { timestamps: true });
 
