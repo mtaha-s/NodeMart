@@ -6,6 +6,7 @@ import router from "express";
 //import routes
 import { authenticationRoutes } from "./routes/user.route.js";
 
+//initialize express app
 const app = express();
 
 // Middlewares
@@ -24,4 +25,5 @@ app.use("/api/users", authenticationRoutes)
 // Health check route
 app.get("/", (req, res) => { res.status(200).json({ message: "Server is running" }); });
 
+// Export the app for use in server.js
 export { app };

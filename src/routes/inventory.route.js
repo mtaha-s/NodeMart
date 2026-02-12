@@ -3,12 +3,15 @@ import {createInventoryItem, getAllInventory, getInventoryById, updateInventoryI
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
+// Inventory Routes
 const inventoryRoutes = express.Router();
 
+// All routes are protected and require authentication
 inventoryRoutes.post("/", verifyJWT, upload.single("image"), createInventoryItem);
 inventoryRoutes.get("/", verifyJWT, getAllInventory);
 inventoryRoutes.get("/:id", verifyJWT, getInventoryById);
 inventoryRoutes.put("/:id", verifyJWT, upload.single("image"), updateInventoryItem);
 inventoryRoutes.delete("/:id", verifyJWT, deleteInventoryItem);
 
+// Export the router
 export { inventoryRoutes };

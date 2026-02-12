@@ -3,7 +3,8 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/aysncHandler.js";
 
-export const verifyJWT = asyncHandler(async (req, res, next) => {
+// Middleware to verify JWT and authenticate user
+const verifyJWT = asyncHandler(async (req, res, next) => {
   try {
     // Get token from cookies OR Authorization header
     const token =
@@ -13,13 +14,11 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     if (!token) {
       throw new ApiError(401, "Unauthorized request");
     }
-
     // Verify token
     const decodedToken = jwt.verify(
       token,
       process.env.ACCESS_TOKEN_SECRET
     );
-
     // Find user
     const user = await User.findById(decodedToken?._id).select(
       "-password -refreshToken"
@@ -28,12 +27,14 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     if (!user) {
       throw new ApiError(401, "Invalid access token");
     }
-
     // Attach user to request
     req.user = user;
-
+    // User is authenticated, proceed to the next middleware or route handler
     next();
   } catch (error) {
     throw new ApiError(401, error?.message || "Invalid access token");
   }
 });
+
+// Export the middleware function
+export { verifyJWT };

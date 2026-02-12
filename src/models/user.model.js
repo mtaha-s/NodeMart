@@ -1,5 +1,6 @@
 import mongoose, {Schema} from 'mongoose';
 
+// User Schema
 const userSchema = new mongoose.Schema({
     fullName:       { type: String, required: true, trim: true, index: true },
     email:          { type: String, required: true, unique: true, lowecase: true, trim: true },
@@ -12,4 +13,5 @@ const userSchema = new mongoose.Schema({
     lastLogin:      { type: Date },
 }, { timestamps: true });
 
+// Create and export User model
 export const User = mongoose.model('User', userSchema);

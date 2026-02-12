@@ -1,14 +1,17 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
+// function to hash password
 const hashPassword = async (password) => {
   return await bcrypt.hash(password, 10);
 };
 
+// function to compare password
 const comparePassword = async (password, hash) => {
   return await bcrypt.compare(password, hash);
 };
 
+// function to generate access token
 const generateAccessToken = (user) => {
   return jwt.sign(
     { _id: user._id, email: user.email, fullName: user.fullName },
@@ -17,6 +20,7 @@ const generateAccessToken = (user) => {
   );
 };
 
+// function to generate refresh token
 const generateRefreshToken = (user) => {
   return jwt.sign(
     { _id: user._id },
@@ -25,4 +29,5 @@ const generateRefreshToken = (user) => {
   );
 };
 
+// export functions
 export { hashPassword, comparePassword, generateAccessToken, generateRefreshToken };
