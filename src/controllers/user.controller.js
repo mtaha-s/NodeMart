@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/aysncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { hashPassword, comparePassword, generateAccessToken, generateRefreshToken } from "../services/jwtBcrypt.js";
+import { imagekit } from "../services/imagekitClient.js";
 import jwt from "jsonwebtoken";
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -19,13 +20,21 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const hashedPassword = await hashPassword(password);
 
-  const avatarLocalPath = req.files?.avatar[0]?.path;
+  // If user uploaded avatar, use it. Otherwise assign default.
+  let avatarUrl = "https://ik.imagekit.io/nodeMart/default-avatar.png"; // default avatar
+  if (req.file) {
+    const uploadedImage = await imagekit.upload({
+      file: req.file.buffer,
+      fileName: `avatar-${Date.now()}-${req.file.originalname}`,
+      folder: "/avatars", 
+    }); avatarUrl = uploadedImage.url;
+  }
 
   const user = await User.create({
     fullName,
     email,
     password: hashedPassword,
-    avatar: avatarLocalPath,
+    avatar: avatarUrl,
     role: "user",
     isActive: true,
   });
@@ -61,22 +70,27 @@ const loginUser = asyncHandler(async (req, res) => {
   const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
   const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
   const options = {
-        httpOnly: true,
-        secure: true
-    }
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict"
+  }
+
 
   // Update lastLogin
   user.lastLogin = new Date();
   user.isActive = true;
   await user.save({ validateBeforeSave: false });
-
   return res
-    .status(200)
-    .json(
-      new ApiResponse(200, {
-        user: loggedInUser, accessToken, refreshToken
-      }, "User Logged in successful")
-    );
+  .status(200)
+  .cookie("accessToken", accessToken, options)
+  .cookie("refreshToken", refreshToken, options)
+  .json(
+    new ApiResponse(
+      200,
+      { user: loggedInUser },
+      "User Logged in successful"
+    )
+  );
 });
 
 // Logout User
@@ -116,9 +130,11 @@ const generateAccessAndRefreshTokens = async (userId) => {
     // Use the service functions you already wrote
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
+console.log("Generated Refresh Token:", refreshToken);
 
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
+console.log("Saved in DB:", user.refreshToken);
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -155,20 +171,22 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         }
     
         const options = {
-            httpOnly: true,
-            secure: true
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict"
         }
+
     
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
     
         return res
         .status(200)
         .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", newRefreshToken, options)
+        .cookie("refreshToken", refreshToken, options)
         .json(
             new ApiResponse(
                 200, 
-                {accessToken, refreshToken: newRefreshToken},
+                {accessToken, refreshToken: refreshToken},
                 "Access token refreshed"
             )
         )
@@ -185,31 +203,55 @@ const changeUserPassword = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Old password and new password are required");
   }
 
+  if (oldPassword === newPassword) {
+    throw new ApiError(400, "New password must be different from old password");
+  }
+
   const user = await User.findById(req.user?._id);
+
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
+  // Verify old password
   const isPasswordValid = await comparePassword(
     oldPassword,
     user.password
   );
 
   if (!isPasswordValid) {
-    throw new ApiError(400, "Invalid old password");
+    throw new ApiError(401, "Invalid old password");
   }
 
+  // Hash new password
   const hashedNewPassword = await hashPassword(newPassword);
   user.password = hashedNewPassword;
+
+  // 🔐 Invalidate old refresh token (VERY IMPORTANT)
+  user.refreshToken = null;
 
   await user.save({ validateBeforeSave: false });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Password changed successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "Password changed successfully. Please login again."
+      )
+    );
 });
 
-// Get Current User
+
+/* Get Current User
+It means:
+  The user whose JWT access token was sent in the request.
+Not:
+  Not random user
+  Not last logged-in user
+  Not first user in DB
+  Not based on email in body */
 const getCurrentUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).select("-password -refreshToken");
   if (!user) throw new ApiError(404, "User not found");
@@ -223,7 +265,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
           _id: user._id,
           fullName: user.fullName,
           email: user.email,
-          avatar: user.avatar,
           role: user.role,
           isActive: user.isActive,
           lastLogin: user.lastLogin, 
@@ -237,73 +278,54 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
 // Update User Avatar
 const updateUserAvatar = asyncHandler(async (req, res) => {
-  if (!req.file?.path) {
-    throw new ApiError(400, "Avatar file is required");
+  // If no file uploaded → keep old avatar
+  if (!req.file) {
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { avatar: req.user.avatar },
+        "No new avatar uploaded, old avatar remains the same"
+      )
+    );
   }
 
-  const user = await User.findById(req.user?._id);
-
+  const user = await User.findById(req.user._id);
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-  // Delete old avatar from Supabase (if exists)
-  if (user.avatar) {
+  // Delete old avatar from ImageKit if exists
+  if (user.avatarFileId) {
     try {
-      const oldFilePath = user.avatar.split("/avatars/")[1]; 
-      // Extract path after bucket name
-
-      if (oldFilePath) {
-        await supabase.storage
-          .from("avatars")
-          .remove([`avatars/${oldFilePath}`]);
-      }
+      await imagekit.deleteFile(user.avatarFileId);
     } catch (error) {
-      console.log("Old avatar deletion failed:", error.message);
+      console.log("Failed to delete old avatar:", error.message);
     }
   }
 
+  // Upload new avatar directly to ImageKit
+  const uploadedImage = await imagekit.upload({
+    file: req.file.buffer, // buffer from multer memoryStorage
+    fileName: `avatar-${user._id}-${Date.now()}`,
+    folder: "/avatars",
+  });
 
-  // Upload new avatar
-  const fileBuffer = fs.readFileSync(req.file.path);
-  const fileName = `avatars/${Date.now()}-${req.file.originalname}`;
-
-  const { error } = await supabase.storage
-    .from("avatars")
-    .upload(fileName, fileBuffer, {
-      contentType: req.file.mimetype,
-    });
-
-  if (error) {
-    throw new ApiError(500, "Error uploading avatar to Supabase");
+  if (!uploadedImage?.url) {
+    throw new ApiError(500, "Image upload failed");
   }
 
-  const { data: publicUrlData } = supabase.storage
-    .from("avatars")
-    .getPublicUrl(fileName);
-
-
-  // Update database
-  user.avatar = publicUrlData.publicUrl;
+  // 🔥 Save new avatar URL + fileId in DB
+  user.avatar = uploadedImage.url;
+  user.avatarFileId = uploadedImage.fileId; // store fileId for future deletion
   await user.save({ validateBeforeSave: false });
 
-  // Delete temp file
-  fs.unlinkSync(req.file.path);
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          _id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          avatar: user.avatar,
-        },
-        "Avatar updated successfully"
-      )
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      { avatar: user.avatar },
+      "Avatar updated successfully"
+    )
+  );
 });
 
 export { registerUser, loginUser, logoutUser, getCurrentUser, changeUserPassword, refreshAccessToken, updateUserAvatar, generateAccessAndRefreshTokens };
