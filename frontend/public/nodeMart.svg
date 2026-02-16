@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+  <!-- NodeMart logo with green-blue gradient -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1"></stop>
+      <stop offset="100%" style="stop-color:#2196F3;stop-opacity:1"></stop>
+    </linearGradient>
+  </defs>
+  <path fill="url(#grad1)" d="M32 48C18.7 48 8 58.7 8 72C8 85.3 18.7 96 32 96H72C76 96 79 99 79.7 103L128 392C134 426 164 448 200 448H456C469.3 448 480 437.3 480 424C480 410.7 469.3 400 456 400H200C188 400 178 392 176 380L172 352H476C506 352 532 330 537 300L568 134C572 114 557 96 537 96H128L127 94C122 68 98 48 72 48H32Z"></path>
+  <circle fill="url(#grad1)" cx="208" cy="528" r="28"></circle>
+  <circle fill="url(#grad1)" cx="432" cy="528" r="28"></circle>
+</svg>
