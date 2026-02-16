@@ -1,7 +1,7 @@
 {
   "name": "nodemart",
   "version": "1.0.0",
-  "description": "A MERN  website",
+  "description": "NodeMart is a web-based inventory and vendor management system designed to help businesses manage products, vendors, and purchasing workflows efficiently.",
   "keywords": [
     "javascript",
     "nodeJS",
