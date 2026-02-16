@@ -31,6 +31,14 @@ const registerUser = asyncHandler(async (req, res) => {
   }
   // Create new user
   const user = await User.create({fullName, email, password: hashedPassword, avatar: avatarUrl, role: "user", isActive: true});
+  // Log activity
+  await logActivity({
+    action: "CREATE_USER",
+    entityType: "User",
+    entityId: user._id,
+    message: `User registered: ${user.fullName}`,
+    userId: user._id
+  });
   // Fetch the created user without sensitive fields to return in response
   const createdUser = await User.findById(user._id).select("-password -refreshToken");
   if (!createdUser) {
@@ -71,6 +79,14 @@ const loginUser = asyncHandler(async (req, res) => {
   user.lastLogin = new Date();
   user.isActive = true;
   await user.save({ validateBeforeSave: false });
+  // Log activity
+  await logActivity({
+    action: "LOGIN_USER",
+    entityType: "User",
+    entityId: user._id,
+    message: `User logged in: ${user.fullName}`,
+    userId: user._id
+  });
   // Set tokens in HTTP-only cookies and respond with user data
   return res
   .status(200)
@@ -102,6 +118,14 @@ const logoutUser = asyncHandler(async (req, res) => {
     user.isActive = false;
     await user.save({ validateBeforeSave: false });
   }
+  // Log activity
+  await logActivity({
+    action: "LOGOUT_USER",
+    entityType: "User",
+    entityId: user._id,
+    message: `User logged out: ${user.fullName}`,
+    userId: user._id
+  });
   // Clear tokens from cookies
   const options = { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict" };
   // Respond with success message
@@ -209,6 +233,14 @@ const changeUserPassword = asyncHandler(async (req, res) => {
   user.refreshToken = null;
   // Save updated user
   await user.save({ validateBeforeSave: false });
+  // Log activity
+  await logActivity({
+    action: "CHANGE_PASSWORD",
+    entityType: "User",
+    entityId: user._id,
+    message: `User changed password: ${user.fullName}`,
+    userId: req.user._id
+  });
   // respond with success message and prompt user to login again
   return res
     .status(200)
@@ -272,6 +304,14 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   user.avatar = uploadedImage.url;
   user.avatarFileId = uploadedImage.fileId; // store fileId for future deletion
   await user.save({ validateBeforeSave: false });
+  // Log activity
+  await logActivity({
+    action: "UPDATE_USER_AVATAR",
+    entityType: "User",
+    entityId: user._id,
+    message: `User updated avatar: ${user.fullName}`,
+    userId: req.user._id
+  });
   // Respond with new avatar URL
   return res.status(200).json(
     new ApiResponse(

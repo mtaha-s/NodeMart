@@ -29,6 +29,14 @@ const createInventoryItem = asyncHandler(async (req, res) => {
   }
   // Create inventory item
   const item = await Inventory.create({itemCode, itemName, description, category, vendorId, quantity, costPrice, retailPrice, reorderLevel, imageUrl});
+  // Log activity
+  await logActivity({
+    action: "CREATE_INVENTORY",
+    entityType: "Inventory",
+    entityId: item._id,
+    message: `Inventory created: ${item.itemName}`,
+    userId: req.user._id
+  });
   // Respond with created item
   return res.status(201).json(
     new ApiResponse(201, item, "Inventory item created successfully")
@@ -104,6 +112,13 @@ const updateInventoryItem = asyncHandler(async (req, res) => {
   Object.assign(item, req.body);
   // Save updated item
   await item.save();
+  await logActivity({
+    action: "UPDATE_INVENTORY",
+    entityType: "Inventory",
+    entityId: item._id,
+    message: `Inventory updated: ${item.itemName}`,
+    userId: req.user._id
+  });
   // Respond with updated item
   return res.status(200).json(
     new ApiResponse(200, item, "Inventory updated successfully")
@@ -120,6 +135,13 @@ const deleteInventoryItem = asyncHandler(async (req, res) => {
   }
   // Delete item
   await item.deleteOne();
+  await logActivity({
+    action: "DELETE_INVENTORY",
+    entityType: "Inventory",
+    entityId: item._id,
+    message: `Inventory deleted: ${item.itemName}`,
+    userId: req.user._id
+  });
   // Respond with success message
   return res.status(200).json(
     new ApiResponse(200, {}, "Inventory item deleted successfully")

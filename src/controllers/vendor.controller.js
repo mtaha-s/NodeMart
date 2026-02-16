@@ -20,6 +20,14 @@ const createVendor = asyncHandler(async (req, res) => {
   }
   // Create vendor
   const vendor = await Vendor.create({fullName, contactPerson, email, phone, address, productsSupplied});
+  // Log activity
+  await logActivity({
+    action: "CREATE_VENDOR",
+    entityType: "Vendor",
+    entityId: vendor._id,
+    message: `Vendor created: ${vendor.fullName}`,
+    userId: req.user._id
+  });
   // Return response
   return res
     .status(201)
@@ -85,6 +93,15 @@ const updateVendor = asyncHandler(async (req, res) => {
   Object.assign(vendor, req.body);
   // Save updated vendor
   await vendor.save();
+  // Log activity
+  await logActivity({
+    action: "UPDATE_VENDOR",
+    entityType: "Vendor",
+    entityId: vendor._id,
+    message: `Vendor updated: ${vendor.fullName}`,
+    userId: req.user._id
+  });
+
   // Return response
   return res
     .status(200)
@@ -110,6 +127,15 @@ const deleteVendor = asyncHandler(async (req, res) => {
   }
   // Delete vendor
   await vendor.deleteOne();
+  // Log activity
+  await logActivity({
+    action: "DELETE_VENDOR",
+    entityType: "Vendor",
+    entityId: vendor._id,
+    message: `Vendor deleted: ${vendor.fullName}`,
+    userId: req.user._id
+  });
+
   // Return response
   return res
     .status(200)

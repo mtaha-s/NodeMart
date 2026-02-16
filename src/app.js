@@ -1,10 +1,12 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import router from "express";
 
 //import routes
 import { authenticationRoutes } from "./routes/user.route.js";
+import { inventoryRoutes } from "./routes/inventory.route.js";
+import { vendorRoutes } from "./routes/vendor.route.js";
+import { dashboardRoutes } from "./routes/dashboard.route.js";
 
 //initialize express app
 const app = express();
@@ -21,6 +23,10 @@ app.use(cookieParser());
 
 //routes declerations
 app.use("/api/users", authenticationRoutes)
+app.use("/api/inventories", inventoryRoutes)
+app.use("/api/vendors", vendorRoutes)
+app.use("/api/dashboard", dashboardRoutes);
+
 
 // Health check route
 app.get("/", (req, res) => { res.status(200).json({ message: "Server is running" }); });
