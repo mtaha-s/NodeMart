@@ -3,6 +3,7 @@ import { Inventory } from "../models/inventory.model.js";
 import { asyncHandler } from "../utils/aysncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { logActivity } from "../utils/activityLogger.js";
 
 // ===== Create Vendor
 const createVendor = asyncHandler(async (req, res) => {
