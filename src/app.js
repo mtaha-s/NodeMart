@@ -22,10 +22,10 @@ app.use(express.static("public"))
 app.use(cookieParser());
 
 //routes declerations
-app.use("/api/users", authenticationRoutes)
-app.use("/api/inventories", inventoryRoutes)
-app.use("/api/vendors", vendorRoutes)
-app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/v1/auth", authenticationRoutes)
+app.use("/api/v1/inventories", inventoryRoutes)
+app.use("/api/v1/vendors", vendorRoutes)
+app.use("/api/v1/dashboard", dashboardRoutes);
 
 
 // Health check route
