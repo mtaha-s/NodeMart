@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import viteLogo from "../assets/nodeMart.svg";
 
-
 export function Dashboard() {
   const [count, setCount] = useState(0);
 
