@@ -1,30 +1,59 @@
-import { createContext, useContext, useState } from 'react';
+// AuthContext.jsx
+import { createContext, useContext, useState, useEffect } from "react";
+import api from "../services/api";
 
 const AuthContext = createContext(undefined);
 
-// Mock user data
-const MOCK_USER = {
-  id: '1',
-  firstName: 'Admin',
-  lastName: 'User',
-  email: 'admin@nodemart.com',
-  role: 'master',
-};
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (email, password) => {
-    // Mock authentication - accept any email/password for demo
-    if (email && password) {
-      setUser(MOCK_USER);
+  // 🔹 Check if user already logged in (on refresh)
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const res = await api.get("/auth/currentUser");
+        setUser(res.data.data);
+      } catch (error) {
+        if (error.response?.status === 401) {
+          setUser(null);
+        } else {
+          console.error("Error fetching current user:", error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUser();
+  }, []);
+
+  // 🔹 Login
+  const login = async (email, password) => {
+    try {
+      await api.post("/auth/login", { email, password });
+
+      // immediately fetch user after login
+      const res = await api.get("/auth/currentUser");
+      setUser(res.data.data);
+
       return true;
+    } catch (error) {
+      console.error(error.response?.data || error);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
-    setUser(null);
+  // 🔹 Logout
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    } finally {
+      // clear user immediately
+      setUser(null);
+    }
   };
 
   return (
@@ -33,6 +62,7 @@ export function AuthProvider({ children }) {
         user,
         login,
         logout,
+        loading,
         isAuthenticated: !!user,
       }}
     >
@@ -44,7 +74,7 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 }

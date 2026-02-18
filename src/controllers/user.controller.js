@@ -262,7 +262,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        {_id: user._id, fullName: user.fullName, email: user.email, role: user.role, isActive: user.isActive, lastLogin: user.lastLogin, createdAt: user.createdAt, updatedAt: user.updatedAt}, "User fetched successfully")
+        {_id: user._id, fullName: user.fullName, email: user.email, avatar: user.avatar, avatarFileId: user.avatarFileId, role: user.role, isActive: user.isActive, lastLogin: user.lastLogin, createdAt: user.createdAt, updatedAt: user.updatedAt}, "User fetched successfully")
     );
 });
 
