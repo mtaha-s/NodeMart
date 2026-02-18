@@ -17,7 +17,9 @@ const activitySchema = new mongoose.Schema(
         "LOGIN_USER",
         "LOGOUT_USER",
         "CHANGE_PASSWORD",
-        "UPDATE_USER_AVATAR"
+        "UPDATE_USER_AVATAR",
+        "UPDATE_USER_ROLE",
+        "DELETE_USER"
       ]
     },
 

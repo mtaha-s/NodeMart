@@ -5,6 +5,7 @@ import Layout from './components/Layout.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import ManageUsers from './pages/ManageUser.jsx';
 // import { InventoryList } from './pages/InventoryList.jsx';
 // import { InventoryForm } from './pages/InventoryForm.jsx';
 // import { VendorList } from './pages/VendorList.jsx';
@@ -32,7 +33,8 @@ function App() {
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
-            
+            {/* Manage Users */}
+            <Route path="manageUsers" element={<ManageUsers />} />
             {/* Inventory nested routes */}
             {/* <Route path="inventory">
               <Route path="list" element={<InventoryList />} />

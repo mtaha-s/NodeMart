@@ -4,12 +4,13 @@ import Navbar from './Navbar.jsx';
 
 const pageTitles = {
   '/dashboard': 'Dashboard',
+  '/manageUsers': 'Manage Users',
 //   '/inventory/list': 'Inventory List',
 //   '/inventory/add': 'Add Inventory Item',
-     '/inventory/purchaseInvoice': 'Purchase Invoice',
+  '/purchaseInvoice': 'Purchase Invoice',
 //   '/vendors': 'Vendors',
 //   '/vendors/add': 'Add Vendor',
-     '/about': 'About',
+  '/about': 'About',
 };
 
 export default function Layout() {

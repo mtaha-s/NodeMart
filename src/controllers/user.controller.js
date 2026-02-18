@@ -96,7 +96,7 @@ const loginUser = asyncHandler(async (req, res) => {
   .json(
     new ApiResponse(
       200,
-      { user: loggedInUser, accessToken, refreshToken },
+      { user: loggedInUser, accessToken, refreshToken, role: loggedInUser.role },
       "User Logged in successful"
     )
   );
@@ -321,5 +321,100 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   );
 });
 
+// ===== Get All Users (Admin Only)
+const getAllUsers = asyncHandler(async (req, res) => {
+  // Fetch all users from database (excluding sensitive fields)
+  const users = await User.find({}).select("-password -refreshToken");
+  
+  if (users.length === 0) {
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, [], "No users found")
+      );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, users, "All users fetched successfully")
+    );
+});
+
+// ===== Update User Role (Admin Only)
+const updateUserRole = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { role } = req.body;
+
+  // Validate role
+  if (!role || !["user", "admin", "vendor"].includes(role)) {
+    throw new ApiError(400, "Invalid role provided");
+  }
+
+  // Find and update user
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { role },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Log activity
+  await logActivity({
+    action: "UPDATE_USER_ROLE",
+    entityType: "User",
+    entityId: user._id,
+    message: `Admin updated user role to ${role}: ${user.fullName}`,
+    userId: req.user._id
+  });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, user, "User role updated successfully")
+    );
+});
+
+// ===== Delete User (Admin Only)
+const deleteUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  // Find user
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Delete avatar from ImageKit if exists
+  if (user.avatarFileId) {
+    try {
+      await imagekit.deleteFile(user.avatarFileId);
+    } catch (error) {
+      console.log("Failed to delete user avatar:", error.message);
+    }
+  }
+
+  // Delete user from database
+  await User.findByIdAndDelete(userId);
+
+  // Log activity
+  await logActivity({
+    action: "DELETE_USER",
+    entityType: "User",
+    entityId: userId,
+    message: `Admin deleted user: ${user.fullName}`,
+    userId: req.user._id
+  });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, {}, "User deleted successfully")
+    );
+});
+
 // ===== export all controller functions
-export { registerUser, loginUser, logoutUser, getCurrentUser, changeUserPassword, refreshAccessToken, updateUserAvatar, generateAccessAndRefreshTokens };
+export { registerUser, loginUser, logoutUser, getCurrentUser, changeUserPassword, refreshAccessToken, updateUserAvatar, generateAccessAndRefreshTokens, getAllUsers, updateUserRole, deleteUser };

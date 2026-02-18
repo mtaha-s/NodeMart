@@ -4,7 +4,7 @@ import viteLogo from '../assets/nodeMart.svg';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/users', label: 'Manage Users', icon: Users },
+  { to: '/manageUsers', label: 'Manage Users', icon: Users },
   { to: '/inventory/list', label: 'Inventory', icon: Package },
   { to: '/vendors', label: 'Vendors', icon: Building2 },
   { to: '/purchaseInvoice', label: 'Purchase Invoice', icon: ShoppingCart },
