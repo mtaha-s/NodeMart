@@ -4,11 +4,11 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 // Vendor Schema
 const vendorSchema = new mongoose.Schema({
   fullName:         { type: String, required: true },
-  contactPerson:    { type: String },
+  contactPerson:    { type: String, required: true },
   email:            { type: String, unique: true, lowercase: true, trim: true },
-  phone:            { type: String },
-  address:          { type: String },
-  productsSupplied: [{ type: String }],
+  phone:            { type: String, required: true },
+  address:          { type: String, required: true },
+  productsSupplied: [{ type: String, required: true }],
 }, { timestamps: true });
 
 // Add pagination plugin
