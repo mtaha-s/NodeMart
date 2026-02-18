@@ -7,7 +7,7 @@ const navItems = [
   { to: '/users', label: 'Manage Users', icon: Users },
   { to: '/inventory/list', label: 'Inventory', icon: Package },
   { to: '/vendors', label: 'Vendors', icon: Building2 },
-  { to: '/inventory/purchase-invoice', label: 'Purchase Invoice', icon: ShoppingCart },
+  { to: '/purchaseInvoice', label: 'Purchase Invoice', icon: ShoppingCart },
   { to: '/about', label: 'About', icon: Info },
 ];
 
@@ -19,9 +19,9 @@ export default function Sidebar() {
     >
       {/* Logo */}
       <div className="h-16 flex items-center px-4 border-b" style={{ borderColor: '#E5E7EB' }}>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <img src={viteLogo} alt="NodeMart Logo" className="w-10 h-10" />
-          <h2 className="text-[22px] font-semibold tracking-tight">
+          <h2 className="text-[28px] font-semibold tracking-tight">
           <span style={{ color: "#49AD5E" }}>Node</span>
            <span style={{ color: "#2B9CCF" }}>Mart</span>
           </h2>

@@ -5,22 +5,10 @@ import { useNavigate } from 'react-router-dom';
 
 // Define role styles
 const roleStyles = {
-  admin: {
-    backgroundColor: "#2563EB", // blue
-    color: "#FFFFFF",
-  },
-  staff: {
-    backgroundColor: "#10B981", // green
-    color: "#FFFFFF",
-  },
-  vendor: {
-    backgroundColor: "#F59E0B", // amber
-    color: "#FFFFFF",
-  },
-  user: {
-    backgroundColor: "#6B7280", // gray
-    color: "#FFFFFF",
-  },
+  admin: { backgroundColor: "#2B9CCF", color: "#FFFFFF" },
+  staff: { backgroundColor: "#2B9CCF", color: "#FFFFFF" },
+  vendor: { backgroundColor: "#2B9CCF", color: "#FFFFFF" },
+  user: { backgroundColor: "#2B9CCF", color: "#FFFFFF" },
 };
 
 export default function Navbar({ title }) {

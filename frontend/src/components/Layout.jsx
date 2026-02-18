@@ -6,10 +6,10 @@ const pageTitles = {
   '/dashboard': 'Dashboard',
 //   '/inventory/list': 'Inventory List',
 //   '/inventory/add': 'Add Inventory Item',
-//   '/inventory/purchase-invoice': 'Purchase Invoice',
+     '/inventory/purchaseInvoice': 'Purchase Invoice',
 //   '/vendors': 'Vendors',
 //   '/vendors/add': 'Add Vendor',
-//   '/about': 'About',
+     '/about': 'About',
 };
 
 export default function Layout() {
