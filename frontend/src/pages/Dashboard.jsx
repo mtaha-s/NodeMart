@@ -7,33 +7,43 @@ export default function Dashboard() {
     totalInventory: 0,
     lowStockItems: 0,
     recentActivity: [],
+    activityPage: 1,
+    activityTotalPages: 1,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch dashboard stats
-  useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const response = await fetch("http://localhost:5000/api/v1/dashboard", {
-          credentials: "include",
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch dashboard data");
-        }
-        setStats(data.data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch dashboard stats with pagination
+  const fetchStats = async (page = 1) => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/v1/dashboard?activityPage=${page}&activityLimit=6`,
+        { credentials: "include" }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to fetch dashboard data");
+      setStats(data.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchStats();
   }, []);
+
+  // Pagination handlers
+  const handlePrevPage = () => {
+    if (stats.activityPage > 1) fetchStats(stats.activityPage - 1);
+  };
+
+  const handleNextPage = () => {
+    if (stats.activityPage < stats.activityTotalPages) fetchStats(stats.activityPage + 1);
+  };
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen font-sans">
@@ -82,20 +92,43 @@ export default function Dashboard() {
             {stats.recentActivity.length === 0 ? (
               <p className="text-gray-500">No recent activity.</p>
             ) : (
-              <ul className="divide-y divide-gray-200">
-                {stats.recentActivity.map((activity) => (
-                  <li key={activity._id} className="py-3 flex flex-col md:flex-row md:justify-between md:items-center">
-                    <div>
-                      <span className="font-medium text-gray-700">{activity.performedBy?.fullName}</span>{" "}
-                      <span className="text-gray-500 text-sm">({activity.performedBy?.email})</span>
-                      <p className="text-gray-600 text-sm mt-1">{activity.message}</p>
-                    </div>
-                    <div className="text-gray-400 text-xs mt-2 md:mt-0">
-                      {new Date(activity.createdAt).toLocaleString()}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <ul className="divide-y divide-gray-200">
+                  {stats.recentActivity.map((activity) => (
+                    <li key={activity._id} className="py-3 flex flex-col md:flex-row md:justify-between md:items-center">
+                      <div>
+                        <span className="font-medium text-gray-700">{activity.performedBy?.fullName}</span>{" "}
+                        <span className="text-gray-500 text-sm">({activity.performedBy?.email})</span>
+                        <p className="text-gray-600 text-sm mt-1">{activity.message}</p>
+                      </div>
+                      <div className="text-gray-400 text-xs mt-2 md:mt-0">
+                        {new Date(activity.createdAt).toLocaleString()}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Pagination Controls */}
+                <div className="flex justify-end mt-4 gap-2">
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={stats.activityPage === 1}
+                    className={`px-3 py-1 rounded border ${stats.activityPage === 1 ? "bg-gray-200 cursor-not-allowed" : "bg-white hover:bg-gray-100"}`}
+                  >
+                    Prev
+                  </button>
+                  <span className="px-3 py-1 text-gray-700">
+                    Page {stats.activityPage} of {stats.activityTotalPages}
+                  </span>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={stats.activityPage === stats.activityTotalPages}
+                    className={`px-3 py-1 rounded border ${stats.activityPage === stats.activityTotalPages ? "bg-gray-200 cursor-not-allowed" : "bg-white hover:bg-gray-100"}`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </>

@@ -101,7 +101,7 @@ export default function ManageUser() {
 
   return (
     <div className="p-2 bg-gray-100 h-screen font-sans overflow-auto">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-2">Manage Users</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-2">All Users</h1>
       <p className="text-gray-600 mb-4">View and manage all system users</p>
 
       {error && (
