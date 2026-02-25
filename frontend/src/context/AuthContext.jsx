@@ -31,15 +31,12 @@ export function AuthProvider({ children }) {
   // 🔹 Login
   const login = async (email, password) => {
     try {
-      await api.post("/auth/login", { email, password });
-
-      // immediately fetch user after login
-      const res = await api.get("/auth/currentUser");
-      setUser(res.data.data);
+      const res = await api.post("/auth/login", { email, password });
+      setUser(res.data.data.user);
 
       return true;
     } catch (error) {
-      console.error(error.response?.data || error);
+      console.error("Error during login:", error.response?.data || error);
       return false;
     }
   };
