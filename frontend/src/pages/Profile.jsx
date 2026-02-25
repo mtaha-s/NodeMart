@@ -16,7 +16,6 @@ export default function Profile() {
 
   const [preview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [hover, setHover] = useState(false);
   const [processing, setProcessing] = useState(false);
 
   if (loading) return <CenteredMessage text="Loading Profile..." />;
@@ -41,25 +40,22 @@ export default function Profile() {
     if (!selectedFile) return;
     setProcessing(true);
     try {
-        const formData = new FormData();
-        formData.append("avatar", selectedFile);
+      const formData = new FormData();
+      formData.append("avatar", selectedFile);
 
-        // Send file to backend, which handles ImageKit upload + DB update
-        const res = await api.patch("/auth/updateAvatar", formData, {
+      const res = await api.patch("/auth/updateAvatar", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        });
+      });
 
-        if (res.data?.data?.avatar) {
-        // Update user context with new avatar
-        //   setUser((prev) => ({ ...prev, avatar: res.data.data.avatar }));
+      if (res.data?.data?.avatar) {
         setPreview(res.data.data.avatar);
         setSelectedFile(null);
-        }
+      }
     } catch (err) {
-        console.error("Avatar update failed:", err);
-        alert(err.response?.data?.message || "Failed to update avatar.");
+      console.error("Avatar update failed:", err);
+      alert(err.response?.data?.message || "Failed to update avatar.");
     } finally {
-        setProcessing(false);
+      setProcessing(false);
     }
   };
 
@@ -85,11 +81,7 @@ export default function Profile() {
         {/* HEADER */}
         <div className="bg-linear-to-r from-[#49AD5E] to-[#2B9CCF] h-30 relative">
           <div className="absolute -bottom-16 left-8">
-            <div
-              className="relative w-32 h-32"
-              onMouseEnter={() => setHover(true)}
-              onMouseLeave={() => setHover(false)}
-            >
+            <div className="relative w-32 h-32">
               <img
                 src={preview || user.avatar}
                 alt="Avatar"
@@ -97,21 +89,21 @@ export default function Profile() {
                 className="w-full h-full rounded-full border-4 border-white shadow-lg object-cover cursor-pointer"
               />
 
-              {/* Overlay with Update/Cancel */}
-              {preview && hover && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center gap-4 rounded-full">
+              {/* Always Visible Update/Cancel Buttons */}
+              {preview && (
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex gap-2">
                   <button
                     onClick={handleUpdate}
                     disabled={processing}
-                    className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
+                    className="p-2 bg-green-500 text-white rounded-full shadow hover:bg-green-600"
                   >
-                    {processing ? "Updating..." : "Update"}
+                    <Check size={16} />
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="px-3 py-1 text-sm bg-gray-300 text-black rounded hover:bg-gray-400"
+                    className="p-2 bg-red-500 text-white rounded-full shadow hover:bg-red-600"
                   >
-                    Cancel
+                    <X size={16} />
                   </button>
                 </div>
               )}
