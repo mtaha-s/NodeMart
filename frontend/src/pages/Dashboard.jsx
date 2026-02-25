@@ -26,7 +26,7 @@ export default function Dashboard() {
       if (!response.ok) throw new Error(data.message || "Failed to fetch dashboard data");
       setStats(data.data);
     } catch (err) {
-      setError(err.message);
+      setError("This feature is under development");
     } finally {
       setLoading(false);
     }
@@ -46,9 +46,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen font-sans">
-      <h1 className="text-3xl font-semibold text-gray-900 mb-4">Overview</h1>
-      <p className="text-gray-600 mb-6">Quick stats about your inventory and vendors</p>
+    <div className=" bg-gray-100 min-h-screen font-sans">
 
       {loading ? (
         <p className="text-gray-500">Loading dashboard data...</p>
@@ -56,6 +54,8 @@ export default function Dashboard() {
         <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>
       ) : (
         <>
+        {/* <h4 className="text-3xl font-semibold text-gray-900 mb-4">Overview</h4> */}
+        <p className="text-gray-600 mb-6">Quick stats about your inventory and vendors</p>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6 rounded-xl shadow flex items-center gap-4">
