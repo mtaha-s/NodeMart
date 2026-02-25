@@ -4,12 +4,16 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { imagekit } from "../services/imagekitClient.js";
 import { logActivity } from "../utils/activityLogger.js";
+import { v4 as uuidv4 } from "uuid";
 
 // ===== Create Inventory Item
 const createInventoryItem = asyncHandler(async (req, res) => {
-  const {itemCode, itemName, description, category, vendorId, quantity, costPrice, retailPrice, reorderLevel} = req.body;
+  const {itemName, description, category, vendorId, quantity, costPrice, retailPrice, reorderLevel} = req.body;
+
+  const itemCode = uuidv4();
+
   // Validate required fields
-  if (!itemCode || !itemName || !vendorId || quantity == null || !costPrice || !retailPrice) {
+  if (!itemName || !vendorId || quantity == null || !costPrice || !retailPrice) {
     throw new ApiError(400, "Required fields are missing");
   }
   // Check for duplicate item code
@@ -47,13 +51,28 @@ const createInventoryItem = asyncHandler(async (req, res) => {
 // ===== Get Inventory Items with Pagination
 const getAllInventory = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, search = "" } = req.query;
-  // Build aggregation pipeline
-    const aggregate = Inventory.aggregate([
-    {
-      $match: {
-        itemName: { $regex: search, $options: "i" },
-      },
-    },
+
+  // Build search condition
+  let matchStage = {};
+
+  if (search) {
+    matchStage = {
+      $or: [
+        { itemName: { $regex: search, $options: "i" } },
+        { itemCode: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        // Allow searching by MongoDB ObjectId
+        ...(search.match(/^[0-9a-fA-F]{24}$/)
+          ? [{ _id: new mongoose.Types.ObjectId(search) }]
+          : []),
+      ],
+    };
+  }
+
+  const aggregate = Inventory.aggregate([
+    { $match: matchStage },
+
+    // Join vendor
     {
       $lookup: {
         from: "vendors",
@@ -62,19 +81,36 @@ const getAllInventory = asyncHandler(async (req, res) => {
         as: "vendor",
       },
     },
-    { $unwind: "$vendor" },
+
+    // IMPORTANT: preserveNullAndEmptyArrays allows vendorId = null
+    {
+      $unwind: {
+        path: "$vendor",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+
     { $sort: { createdAt: -1 } },
   ]);
-  // Pagination options
+
   const options = {
     page: Number(page),
     limit: Number(limit),
   };
-  // Execute aggregation with pagination
+
   const result = await Inventory.aggregatePaginate(aggregate, options);
-  // Respond with paginated results
+
   return res.status(200).json(
-    new ApiResponse(200, result, "Inventory fetched successfully")
+    new ApiResponse(
+      200,
+      {
+        inventories: result.docs,
+        page: result.page,
+        totalPages: result.totalPages,
+        totalDocs: result.totalDocs,
+      },
+      "Inventory fetched successfully"
+    )
   );
 });
 

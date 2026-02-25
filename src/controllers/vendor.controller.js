@@ -38,23 +38,32 @@ const createVendor = asyncHandler(async (req, res) => {
 // ===== Get All Vendors
 const getAllVendors = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, search = "" } = req.query;
-  // Build aggregation pipeline
+
+  // Build match condition
+  const matchStage = {};
+
+  if (search && search.trim() !== "") {
+    matchStage.$or = [
+      { fullName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { phone: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  // Aggregation pipeline
   const aggregate = Vendor.aggregate([
-    {
-      $match: {
-        fullName: { $regex: search, $options: "i" },
-      },
-    },
+    { $match: matchStage },
     { $sort: { createdAt: -1 } },
   ]);
+
   // Pagination options
   const options = {
     page: Number(page),
     limit: Number(limit),
   };
-  // Execute aggregation with pagination
+
   const result = await Vendor.aggregatePaginate(aggregate, options);
-  // Return response
+
   return res
     .status(200)
     .json(new ApiResponse(200, result, "Vendors fetched successfully"));

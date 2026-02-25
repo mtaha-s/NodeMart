@@ -71,14 +71,12 @@ const loginUser = asyncHandler(async (req, res) => {
   // Generate access and refresh tokens
   const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
   const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
-  const options = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict"
-  }
+  // Set secure cookie options
+  const options = {httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict"}
   // Update lastLogin
   user.lastLogin = new Date();
   user.isActive = true;
+  user.refreshToken = refreshToken;
   await user.save({ validateBeforeSave: false });
   // Log activity
   await logActivity({
@@ -112,7 +110,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.user._id,
     { $unset: { refreshToken: 1 } },
-    { new: true }
+    { returnDocument: "after"}
   );
   // Optionally, you can also set isActive to false on logout
   if (user) {
@@ -187,7 +185,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   const options = {httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict"}
   // Generate new tokens using the helper function
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-  // Set new tokens in cookies and respond with new access token
+  // Update user's refresh token in DB
+  user.refreshToken = refreshToken;
+  await user.save();
+  // respond with new tokens in HTTP-only cookies and JSON response
   return res
   .status(200)
   .cookie("accessToken", accessToken, options)
