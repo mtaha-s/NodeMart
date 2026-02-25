@@ -1,6 +1,4 @@
 import { useAuth } from '../context/AuthContext';
-import { Avatar } from './ui/Avatar';
-import { LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // Define role styles
@@ -12,13 +10,8 @@ const roleStyles = {
 };
 
 export default function Navbar({ title }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <div
@@ -32,16 +25,6 @@ export default function Navbar({ title }) {
       <div className="flex items-center gap-4">
         {user && (
           <>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-[14px] font-medium" style={{ color: '#374151' }}>
-                  {user.fullName}
-                </p>
-                <p className="text-[12px]" style={{ color: '#6B7280' }}>
-                  {user.email}
-                </p>
-              </div>
-              <Avatar size="lg" />
               {user.role && (
                 <span
                   style={{
@@ -55,15 +38,6 @@ export default function Navbar({ title }) {
                   {user.role.toUpperCase()}
                 </span>
               )}
-            </div>
-            <button
-              onClick={handleLogout}
-              className="h-10 w-10 rounded-md hover:bg-gray-100 flex items-center justify-center transition-colors"
-              style={{ color: '#6B7280' }}
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
           </>
         )}
       </div>
