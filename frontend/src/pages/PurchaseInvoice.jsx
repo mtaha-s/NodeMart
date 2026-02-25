@@ -4,8 +4,7 @@ import { FileText } from "lucide-react";
 export default function PurchaseInvoice() {
 
   return (
-    <div className="p-2 bg-gray-100 h-screen font-sans">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-2">Purchase Invoice</h1>
+    <div className=" bg-gray-100 h-screen font-sans">
       <p className="text-gray-600 mb-4">Manage purchase invoices and orders</p>
 
       {/* Main Content */}

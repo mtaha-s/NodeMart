@@ -41,8 +41,7 @@ export default function About() {
   ];
 
   return (
-    <div className="p-2 bg-gray-100 min-h-screen font-sans">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">About NodeMart</h1>
+    <div className=" bg-gray-100 min-h-screen font-sans">
       <p className="text-gray-600 mb-6">Learn more about our inventory management system</p>
 
       {/* What is NodeMart Section */}

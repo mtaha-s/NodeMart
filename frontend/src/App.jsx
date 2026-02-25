@@ -6,13 +6,14 @@ import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import ManageUsers from './pages/ManageUser.jsx';
-// import { InventoryList } from './pages/InventoryList.jsx';
-// import { InventoryForm } from './pages/InventoryForm.jsx';
-// import { VendorList } from './pages/VendorList.jsx';
-// import { VendorForm } from './pages/VendorForm.jsx';
+import InventoryList from './pages/InventoryList.jsx';
+import InventoryForm from './pages/InventoryForm.jsx';
+import VendorList from './pages/VendorList.jsx';
+import VendorForm from './pages/VendorForm.jsx';
 import PurchaseInvoice from './pages/PurchaseInvoice.jsx';
 import About from './pages/About.jsx';
-// zCjqYQqVwTuo38l4pd2vwP4u8L5fYN8FjzXYC556tbYR6U9QXA
+import Profile from './pages/Profile.jsx';
+
 function App() {
   return (
     <AuthProvider>
@@ -36,20 +37,27 @@ function App() {
             {/* Manage Users */}
             <Route path="manageUsers" element={<ManageUsers />} />
             {/* Inventory nested routes */}
-            {/* <Route path="inventory">
+            <Route path="inventory">
               <Route path="list" element={<InventoryList />} />
               <Route path="add" element={<InventoryForm />} />
-              <Route path="purchaseInvoice" element={<PurchaseInvoice />} />
-            </Route> */}
-            
+              {/* {* <Route path="edit/:id" element={<InventoryForm />} /> */}
+            </Route>
+          
             {/* Vendor routes */}
-            {/* <Route path="vendors" element={<VendorList />} />
-            <Route path="vendors/add" element={<VendorForm />} />
-             */}
+            <Route path="vendor">
+              <Route path="list" element={<VendorList />} />
+              <Route path="add" element={<VendorForm />} />
+              {/*<Route path="edit/:id" element={<VendorForm />} /> */}
+            </Route>
+
             {/* Purchase Invoice */}
             <Route path="purchaseInvoice" element={<PurchaseInvoice />} />
+
             {/* About page */}
             <Route path="about" element={<About />} />
+            
+            {/* Profile Page */}
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
           {/* Catch all - redirect to dashboard */}
