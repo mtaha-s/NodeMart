@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import viteLogo from "../assets/nodeMart.svg";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [forgotEmail, setForgotEmail] = useState("");
@@ -10,7 +12,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
   // ================= LOGIN =================
@@ -20,23 +21,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // IMPORTANT for cookies
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+      const success = await login(email, password);
+      if (success) {
+        navigate("/dashboard");
+      } else {
+        setError("Invalid email or password");
       }
-
-      localStorage.setItem("accessToken", data.data.accessToken);
-      navigate("/dashboard");
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -161,7 +153,7 @@ export default function Login() {
               Reset Password
             </h3>
             <form onSubmit={handleForgotPassword} className="space-y-3">
-              <input
+              {/* <input
                 type="email"
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
@@ -174,7 +166,8 @@ export default function Login() {
                 className="w-full h-10 bg-green-600 text-white font-medium rounded hover:bg-green-700"
               >
                 Send Reset Link
-              </button>
+              </button> */}
+              <h2>This feature is under development</h2>
             </form>
           </div>
         )}
