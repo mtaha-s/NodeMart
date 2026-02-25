@@ -1,5 +1,5 @@
 import express from "express";
-import {registerUser, loginUser, logoutUser, getCurrentUser, changeUserPassword, updateUserAvatar, getAllUsers, updateUserRole, deleteUser} from "../controllers/user.controller.js";
+import {registerUser, loginUser, logoutUser, getCurrentUser, changeUserPassword, updateUserAvatar, getAllUsers, updateUserRole, deleteUser, refreshAccessToken} from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -16,6 +16,7 @@ authenticationRoutes.post("/logout", verifyJWT, logoutUser);
 authenticationRoutes.get("/currentUser", verifyJWT, getCurrentUser);
 authenticationRoutes.post("/changeUserPassword", verifyJWT, changeUserPassword);
 authenticationRoutes.patch("/updateAvatar", verifyJWT, upload.single("avatar"), updateUserAvatar);
+authenticationRoutes.post("/auth/refresh", refreshAccessToken);
 
 // Admin routes - Get all users, update role, delete user
 adminRouters.get("/all", verifyJWT, getAllUsers);
