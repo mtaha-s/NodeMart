@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import viteLogo from "../assets/nodeMart.svg";
 import { useAuth } from "../context/AuthContext";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Login() {
   const { login } = useAuth();
@@ -21,14 +22,17 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const success = await login(email, password);
-      if (success) {
+      const user = await login(email, password);
+      if (user) {
         navigate("/dashboard");
+        setTimeout(() => {
+        toast.success(`Welcome Back ${user.fullName}!`);
+      }, 2000);
       } else {
-        setError("Invalid email or password");
+        toast.error("Invalid email or password");
       }
     } catch (err) {
-      setError("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }

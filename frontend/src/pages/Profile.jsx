@@ -1,61 +1,67 @@
 import React, { useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import { Camera, Lock, Check, X } from "lucide-react";
+import { Camera, Lock } from "lucide-react";
 import Breadcrumbs from "../services/BreadCrumbs";
+import toast, { Toaster } from "react-hot-toast";
+import AvatarCropModal from "../components/AvatarCropModel";
+import getCroppedImg from "../services/cropImage";
 
 export default function Profile() {
-  const { user, loading, logout, setUser } = useAuth();
+  const { user, setUser, loading, logout } = useAuth();
   const fileInputRef = useRef(null);
 
   const [showPasswordSection, setShowPasswordSection] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    oldPassword: "",
-    newPassword: "",
-  });
-
-  const [preview, setPreview] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [passwordData, setPasswordData] = useState({ oldPassword: "", newPassword: "" });
   const [processing, setProcessing] = useState(false);
+  const [cropImage, setCropImage] = useState(null);
 
   if (loading) return <CenteredMessage text="Loading Profile..." />;
   if (!user) return <CenteredMessage text="User not authenticated." error />;
 
-  /* ================= AVATAR UPDATE ================= */
+  /* ================= AVATAR SELECT ================= */
   const handleAvatarClick = () => fileInputRef.current.click();
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setSelectedFile(file);
-    setPreview(URL.createObjectURL(file));
+
+    const imageUrl = URL.createObjectURL(file);
+    setCropImage(imageUrl); // open crop modal
   };
 
-  const handleCancel = () => {
-    setPreview(null);
-    setSelectedFile(null);
-  };
+  /* ================= CROP COMPLETE ================= */
+  const handleCropComplete = async (croppedAreaPixels) => {
+    const croppedBlob = await getCroppedImg(cropImage, croppedAreaPixels);
 
-  const handleUpdate = async () => {
-    if (!selectedFile) return;
+    const formData = new FormData();
+    formData.append("avatar", croppedBlob);
+
+    const toastId = toast.loading("Avatar updating...");
     setProcessing(true);
-    try {
-      const formData = new FormData();
-      formData.append("avatar", selectedFile);
 
+    try {
       const res = await api.patch("/auth/updateAvatar", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (res.data?.data?.avatar) {
-        setPreview(res.data.data.avatar);
-        setSelectedFile(null);
+        setUser((prev) => ({
+          ...prev,
+          avatar: res.data.data.avatar,
+        }));
+
+        toast.success("Avatar successfully updated", { id: toastId });
+      } else {
+        toast.error("Failed to update avatar", { id: toastId });
       }
     } catch (err) {
-      console.error("Avatar update failed:", err);
-      alert(err.response?.data?.message || "Failed to update avatar.");
+      toast.error(err.response?.data?.message || "Failed to update avatar", {
+        id: toastId,
+      });
     } finally {
       setProcessing(false);
+      setCropImage(null); // close modal
     }
   };
 
@@ -63,11 +69,17 @@ export default function Profile() {
   const handlePasswordChange = async () => {
     try {
       setProcessing(true);
+
       await api.post("/auth/changeUserPassword", passwordData);
-      alert("Password changed. Please login again.");
-      logout();
+
+      toast.success("Password changed. Please login again.");
+      setTimeout(logout, 2000);
+
+
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to change password");
+      toast.error(
+        error.response?.data?.message || "Failed to change password"
+      );
     } finally {
       setProcessing(false);
     }
@@ -75,43 +87,23 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-100 px-4">
+      <Toaster position="top-right" />
       <Breadcrumbs />
       <div className="max-w-full bg-white shadow-xl rounded-2xl overflow-hidden">
-
         {/* HEADER */}
-        <div className="bg-linear-to-r from-[#49AD5E] to-[#2B9CCF] h-30 relative">
+        <div className="bg-linear-to-r from-[#49AD5E] to-[#2B9CCF] h-32 relative">
           <div className="absolute -bottom-16 left-8">
             <div className="relative w-32 h-32">
               <img
-                src={preview || user.avatar}
+                src={user.avatar}
                 alt="Avatar"
                 onClick={handleAvatarClick}
                 className="w-full h-full rounded-full border-4 border-white shadow-lg object-cover cursor-pointer"
               />
 
-              {/* Always Visible Update/Cancel Buttons */}
-              {preview && (
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex gap-2">
-                  <button
-                    onClick={handleUpdate}
-                    disabled={processing}
-                    className="p-2 bg-green-500 text-white rounded-full shadow hover:bg-green-600"
-                  >
-                    <Check size={16} />
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="p-2 bg-red-500 text-white rounded-full shadow hover:bg-red-600"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              )}
-
-              {/* Camera Button */}
               <button
                 onClick={handleAvatarClick}
-                className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow hover:bg-gray-100 transition"
+                className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow hover:bg-gray-100"
               >
                 <Camera size={18} />
               </button>
@@ -209,10 +201,18 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      {/* 🔥 Crop Modal OUTSIDE header (Correct Placement) */}
+      {cropImage && (
+        <AvatarCropModal
+          image={cropImage}
+          onCancel={() => setCropImage(null)}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </div>
   );
 }
-
 /* ================= Reusable ================= */
 function InfoCard({ label, value }) {
   return (
