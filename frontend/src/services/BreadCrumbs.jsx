@@ -17,9 +17,9 @@ export default function Breadcrumbs() {
             <li key={to} className="flex items-center space-x-2">
               <span>/</span>
               {isLast ? (
-                <span className="text-gray-700 capitalize">{value}</span>
+                <span className="text-[#49AD5E] capitalize">{value}</span>
               ) : (
-                <Link to={to} className="text-blue-600 hover:underline capitalize">
+                <Link to={to} className="text-[#2B9CCF] hover:underline capitalize">
                   {value}
                 </Link>
               )}

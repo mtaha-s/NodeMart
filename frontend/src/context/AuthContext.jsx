@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
         if (error.response?.status === 401) {
           setUser(null);
         } else {
-          console.error("Error fetching current user:", error);
+          showError("Error fetching current user:", error);
         }
       } finally {
         setLoading(false);
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
 
       return true;
     } catch (error) {
-      console.error("Error during login:", error.response?.data || error);
+      showError("Error during login:", error.response?.data || error);
       return false;
     }
   };
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
     try {
       await api.post("/auth/logout");
     } catch (error) {
-      console.error("Error during logout:", error);
+      showError("Error during logout:", error);
     } finally {
       // clear user immediately
       setUser(null);
@@ -57,6 +57,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         login,
         logout,
         loading,
