@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
+import { Toaster } from "react-hot-toast";
 import Layout from './components/Layout.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
@@ -18,6 +19,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+      <Toaster position="top-right" reverseOrder={true} />
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />

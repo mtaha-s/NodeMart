@@ -1,6 +1,7 @@
 // AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "../services/api";
+import toast from "react-hot-toast";
 
 const AuthContext = createContext(undefined);
 
@@ -18,7 +19,8 @@ export function AuthProvider({ children }) {
         if (error.response?.status === 401) {
           setUser(null);
         } else {
-          showError("Error fetching current user:", error);
+          toast.error("Error fetching current user");
+          console.error(error);
         }
       } finally {
         setLoading(false);
@@ -28,25 +30,36 @@ export function AuthProvider({ children }) {
     checkUser();
   }, []);
 
-  // 🔹 Login
-  const login = async (email, password) => {
+  // 🔹 Register
+  const register = async (userData) => {
     try {
-      const res = await api.post("/auth/login", { email, password });
-      setUser(res.data.data.user);
-
-      return true;
+      const res = await api.post("/auth/register", userData);
+      return res.data;
     } catch (error) {
-      showError("Error during login:", error.response?.data || error);
-      return false;
+      throw error;
     }
   };
+
+  // 🔹 Login
+  // 🔹 Login
+const login = async (email, password) => {
+  return api.post("/auth/login", { email, password })
+    .then((res) => {
+      setUser(res.data.data.user);
+      return res.data; // return actual data
+    })
+    .catch((error) => {
+      console.log("Error during login:", error.response?.data || error);
+      throw error;
+    });
+};
 
   // 🔹 Logout
   const logout = async () => {
     try {
       await api.post("/auth/logout");
     } catch (error) {
-      showError("Error during logout:", error);
+      toast.error("Error during logout:", error);
     } finally {
       // clear user immediately
       setUser(null);
@@ -58,6 +71,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         setUser,
+        register,
         login,
         logout,
         loading,

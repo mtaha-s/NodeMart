@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
-import { Avatar } from './ui/Avatar';
 import { LogOut } from 'lucide-react';
+import { showError, showSuccess } from "../services/toast";
 import { useNavigate } from 'react-router-dom';
 
 // Define role styles
@@ -17,6 +17,7 @@ export default function Navbar({ title }) {
 
   const handleLogout = () => {
     logout();
+    showSuccess("Logged out successfully");
     navigate('/login');
 };
 

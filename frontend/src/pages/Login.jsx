@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import viteLogo from "../assets/nodeMart.svg";
 import { useAuth } from "../context/AuthContext";
-import toast, { Toaster } from "react-hot-toast";
+import { showError, showPromise } from "../services/toast";
 
 export default function Login() {
   const { login } = useAuth();
@@ -16,27 +16,20 @@ export default function Login() {
   const navigate = useNavigate();
 
   // ================= LOGIN =================
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  const handleSubmit = (e) => {
+  e.preventDefault();
 
-    try {
-      const user = await login(email, password);
-      if (user) {
-        navigate("/dashboard");
-        setTimeout(() => {
-        toast.success(`Welcome Back ${user.fullName}!`);
-      }, 2000);
-      } else {
-        toast.error("Invalid email or password");
-      }
-    } catch (err) {
-      toast.error("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loginPromise = login(email, password);
+
+  showPromise(loginPromise, {
+    loading: "Logging In user...",
+    success: "Logged in successfully!",
+    error: (err) =>
+      err.response?.data?.message || "Invalid Credentials",
+  }).then(() => {
+    navigate("/dashboard");
+  });
+};
 
   // ================= FORGOT PASSWORD =================
   const handleForgotPassword = async (e) => {
@@ -63,7 +56,7 @@ export default function Login() {
       setMessage("Password reset link sent to your email.");
       setForgotEmail("");
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
     }
   };
 

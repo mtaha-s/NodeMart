@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import viteLogo from "../assets/nodeMart.svg";
+import { showError, showPromise } from "../services/toast";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -15,7 +16,6 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Convert file to base64 (for ImageKit upload via backend)
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -26,7 +26,6 @@ export default function Register() {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-
     if (name === "avatar") {
       setFormData({ ...formData, avatar: files[0] });
     } else {
@@ -36,50 +35,44 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
+      showError("Passwords do not match");
       return;
     }
 
-    try {
-      let avatarBase64 = null;
-
-      // If user uploaded avatar → convert to base64
-      if (formData.avatar) {
-        avatarBase64 = await toBase64(formData.avatar);
-      }
-
-      const response = await fetch(
-        "http://localhost:5000/api/v1/auth/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fullName: formData.fullName,
-            email: formData.email,
-            password: formData.password,
-            avatar: avatarBase64, // null if not uploaded
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
-      }
-
-      // Redirect to login after successful registration
-      navigate("/login");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    let avatarBase64 = null;
+    if (formData.avatar) {
+      avatarBase64 = await toBase64(formData.avatar);
     }
+
+    // Wrap the entire fetch in a Promise for toast
+    const registerPromise = fetch(
+      "http://localhost:5000/api/v1/auth/register",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          avatar: avatarBase64,
+        }),
+      }
+    ).then(async (res) => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Registration failed");
+      return data;
+    });
+
+    // Show promise toast, handle success and error automatically
+    showPromise(registerPromise, {
+      loading: "Registering user...",
+      success: "Registration successful!",
+      error: "User with this email already exists",
+    }).then(() => {
+      navigate("/login");
+    });
   };
 
   return (

@@ -87,7 +87,6 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-100 px-4">
-      <Toaster position="top-right" />
       <Breadcrumbs />
       <div className="max-w-full bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* HEADER */}

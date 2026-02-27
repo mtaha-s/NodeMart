@@ -7,6 +7,7 @@ import { adminRouters, authenticationRoutes } from "./routes/user.route.js";
 import { inventoryRoutes } from "./routes/inventory.route.js";
 import { vendorRoutes } from "./routes/vendor.route.js";
 import { dashboardRoutes } from "./routes/dashboard.route.js";
+import { errorHandler } from "./middlewares/error.middleware.js";
 
 //initialize express app
 const app = express();
@@ -27,6 +28,9 @@ app.use("/api/v1/users", adminRouters) // Admin user management routes
 app.use("/api/v1/inventories", inventoryRoutes)
 app.use("/api/v1/vendors", vendorRoutes)
 app.use("/api/v1/dashboard", dashboardRoutes);
+
+// Global error handler (must be last)
+app.use(errorHandler);
 
 // Health check route
 app.get("/", (req, res) => { res.status(200).json({ message: "Server is running" }); });
