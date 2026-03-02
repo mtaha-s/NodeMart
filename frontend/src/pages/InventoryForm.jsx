@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
 import Breadcrumbs from "../services/BreadCrumbs";
+import { showError, showPromise, showSuccess  } from "../services/toast";
 
-export default function InventoryForm() {
+export default function InventoryForm({mode}) {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -26,31 +27,33 @@ export default function InventoryForm() {
   const [customCategory, setCustomCategory] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [existingImageUrl, setExistingImageUrl] = useState("");
 
-  // Fetch Vendors
+  // Get Vendors & Categories (from inventories)
   useEffect(() => {
-    const fetchVendors = async () => {
-      try {
-        const res = await api.get("/vendors?limit=1000");
-        setVendors(res.data.data.docs || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchVendors();
-  }, []);
+  const fetchInitialData = async () => {
+    try {
+      const [vendorRes, invRes] = await Promise.all([
+        api.get("/vendors?limit=1000"),
+        api.get("/inventories?limit=1000"),
+      ]);
 
-  // Fetch Categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await api.get("/categories");
-        setCategories(res.data.data || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchCategories();
+      setVendors(vendorRes.data.data.docs || []);
+
+      const inventories = invRes.data.data.docs || [];
+      const uniqueCategories = [
+        ...new Set(inventories.map((inv) => inv.category).filter(Boolean)),
+      ];
+
+      setCategories(
+        uniqueCategories.map((cat) => ({ _id: cat, name: cat }))
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchInitialData();
   }, []);
 
   // Fetch Inventory (Edit Mode)
@@ -68,8 +71,10 @@ export default function InventoryForm() {
           reorderLevel: item.reorderLevel || 10,
           image: null,
         });
+        setExistingImageUrl(item.imageUrl || "");
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch inventory");
+        showError("Failed to GET Inventory");
+        setError(err.response?.data?.message || "Failed to GET inventory");
       }
     };
 
@@ -80,48 +85,68 @@ export default function InventoryForm() {
     const { name, value, files } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: files ? files[0] : value,
+      [name]: files && files.length > 0 ? files[0] : value,
     }));
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      const data = new FormData();
+  try {
+    const data = new FormData();
 
-      const finalCategory =
-        formData.category === "custom" ? customCategory : formData.category;
+    const finalCategory =
+      formData.category === "custom" ? customCategory : formData.category;
 
-      for (const key in formData) {
-        if (key === "category") {
-          data.append("category", finalCategory);
-        } else {
-          data.append(key, formData[key]);
+    for (const key in formData) {
+      if (key === "category") {
+        data.append("category", finalCategory);
+      } else if (key === "image") {
+        if (formData.image) {
+          data.append("image", formData.image); // ✅ send new file
         }
+        // If no new file, skip — backend keeps old image
+      } else {
+        data.append(key, formData[key]);
       }
-
-      const url = isEditMode ? `/inventories/${id}` : "/inventories";
-      const method = isEditMode ? "put" : "post";
-
-      await api[method](url, data);
-
-      navigate("/inventory/list");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to save inventory");
-    } finally {
-      setLoading(false);
     }
-  };
+
+    const url = isEditMode ? `/inventories/${id}` : "/inventories";
+    const method = isEditMode ? "put" : "post";
+
+    await api[method](url, data);
+
+    navigate("/inventory/list");
+    showSuccess("Inventory Item updated successfully");
+  } catch (err) {
+    setError(err.response?.data?.message || "Failed to save inventory");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const inputClass =
     "h-10 px-3 w-full border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
     <div className="bg-gray-100 min-h-screen">
-      <Breadcrumbs />
+      <Breadcrumbs
+        paths={
+          !isEditMode
+            ? [
+                { name: "Inventory", path: "/inventory/list" },
+                { name: "Add" }
+              ]
+            : [
+              { name: "Inventory", path: "/inventory/list" },
+              { name: "Edit" },
+              { name: `(${formData.itemName || id})` }
+            ]
+          } 
+      />
       <div className="bg-white w-full rounded-xl shadow-lg p-10">
 
         <p className="text-gray-500 mb-10 text-lg">
@@ -130,13 +155,12 @@ export default function InventoryForm() {
             : "Add new inventory item."}
         </p>
 
-        {error && (
+        {error ? (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-6">
             {error}
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-8">
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-8">
 
           {/* Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -172,7 +196,6 @@ export default function InventoryForm() {
 
           {/* Row 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
             <div>
               <label className="block mb-1 text-sm font-medium">
                 Category
@@ -183,18 +206,29 @@ export default function InventoryForm() {
                 onChange={handleChange}
                 className={inputClass}
               >
-                <option value="">Select Category</option>
+                {/* Add mode → show "Select Category" */}
+                {!isEditMode && <option value="">Select Category</option>}
+
+                {/* Edit mode → show the saved category as the first option */}
+                {isEditMode && (
+                  <option value={formData.category}>{formData.category}</option>
+                )}
+
+                {/* Existing categories */}
                 {categories.map((cat) => (
                   <option key={cat._id} value={cat.name}>
                     {cat.name}
                   </option>
                 ))}
+
+                {/* Option to add new */}
                 <option value="custom">+ Add New Category</option>
               </select>
 
+              {/* Show input if "custom" is chosen */}
               {formData.category === "custom" && (
                 <input
-                  type="text"
+                type="text"
                   placeholder="Enter new category"
                   value={customCategory}
                   onChange={(e) => setCustomCategory(e.target.value)}
@@ -306,6 +340,13 @@ export default function InventoryForm() {
               <label className="block mb-1 text-sm font-medium">
                 Product Image
               </label>
+              {existingImageUrl && !formData.image && (
+                <img
+                  src={existingImageUrl}
+                  alt="Current product"
+                  className="w-32 h-32 object-cover rounded mb-2"
+                />
+              )}
               <input
                 type="file"
                 name="image"
@@ -313,7 +354,6 @@ export default function InventoryForm() {
                 className="w-full"
               />
             </div>
-
           </div>
 
           {/* Buttons */}
@@ -322,7 +362,7 @@ export default function InventoryForm() {
               type="button"
               onClick={() => navigate("/inventory/list")}
               className="px-6 py-2 rounded bg-gray-300 hover:bg-gray-400"
-            >
+              >
               Cancel
             </button>
 
@@ -330,7 +370,7 @@ export default function InventoryForm() {
               type="submit"
               disabled={loading}
               className="px-6 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-            >
+              >
               {loading
                 ? "Saving..."
                 : isEditMode
@@ -338,8 +378,8 @@ export default function InventoryForm() {
                 : "Add Inventory"}
             </button>
           </div>
-
         </form>
+        )}
       </div>
     </div>
   );

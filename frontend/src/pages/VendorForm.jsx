@@ -1,10 +1,15 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
 import Breadcrumbs from "../services/BreadCrumbs";
+import { showPromise, showError } from "../services/toast";
 
 export default function VendorForm() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+
+  const hasFetched = useRef(false);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -18,6 +23,36 @@ export default function VendorForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ✅ Fetch Vendor (Edit Mode)
+  useEffect(() => {
+    if (!isEditMode || hasFetched.current) return;
+
+    hasFetched.current = true;
+
+    const fetchVendor = async () => {
+      try {
+        const res = await api.get(`/vendors/${id}`);
+        const vendor = res.data.data;
+
+        setFormData({
+          fullName: vendor.fullName || "",
+          contactPerson: vendor.contactPerson || "",
+          email: vendor.email || "",
+          phone: vendor.phone || "",
+          address: vendor.address || "",
+          productsSupplied: vendor.productsSupplied?.join(", ") || "",
+        });
+      } catch (err) {
+        showError(
+          err.response?.data?.message || "Failed to load vendor"
+        );
+        navigate("/vendor/list");
+      }
+    };
+
+    fetchVendor();
+  }, [id, isEditMode, navigate]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -25,37 +60,53 @@ export default function VendorForm() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
 
-    try {
-      await api.post("/vendors", {
-        ...formData,
-        productsSupplied: formData.productsSupplied
-          .split(",")
-          .map((p) => p.trim()),
-      });
+    const payload = {
+      ...formData,
+      productsSupplied: formData.productsSupplied
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean),
+    };
 
-      alert("Vendor created successfully!");
+    const url = isEditMode ? `/vendors/${id}` : "/vendors";
+    const method = isEditMode ? "put" : "post";
+
+    const pro = api[method](url, payload);
+
+    showPromise(pro, {
+      loading: isEditMode
+        ? "Updating vendor..."
+        : "Creating vendor...",
+      success: isEditMode
+        ? "Vendor updated successfully!"
+        : "Vendor created successfully!",
+      error: (err) =>
+        err.response?.data?.message || "Failed to save vendor",
+    }).then(() => {
       navigate("/vendor/list");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to create vendor");
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const inputClass =
     "h-10 px-3 w-full border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
-      <div className="bg-gray-100 min-h-screen">
-        <Breadcrumbs />
+    <div className="bg-gray-100 min-h-screen">
+      <Breadcrumbs
+        paths={[
+          { name: "Vendors", path: "/vendor/list" },
+          { name: isEditMode ? "Edit" : "Add" },
+        ]}
+      />
+
       <div className="bg-white w-full rounded-xl shadow p-8">
         <p className="text-gray-500 mb-6">
-          Add new vendor information below.
+          {isEditMode
+            ? "Update vendor information below."
+            : "Add new vendor information below."}
         </p>
 
         {error && (
@@ -64,9 +115,7 @@ export default function VendorForm() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* Row 1 */}
+        <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block mb-1 text-sm font-medium">
@@ -97,7 +146,6 @@ export default function VendorForm() {
             </div>
           </div>
 
-          {/* Row 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block mb-1 text-sm font-medium">
@@ -128,39 +176,34 @@ export default function VendorForm() {
             </div>
           </div>
 
-          {/* Row 3 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block mb-1 text-sm font-medium">
-                Address *
-              </label>
-              <input
-                type="text"
-                name="address"
-                required
-                value={formData.address}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1 text-sm font-medium">
-                Products Supplied (comma separated) *
-              </label>
-              <input
-                type="text"
-                name="productsSupplied"
-                required
-                placeholder="Laptop, Mouse, Keyboard"
-                value={formData.productsSupplied}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
+          <div>
+            <label className="block mb-1 text-sm font-medium">
+              Address *
+            </label>
+            <input
+              type="text"
+              name="address"
+              required
+              value={formData.address}
+              onChange={handleChange}
+              className={inputClass}
+            />
           </div>
 
-          {/* Buttons */}
+          <div>
+            <label className="block mb-1 text-sm font-medium">
+              Products Supplied (comma separated) *
+            </label>
+            <input
+              type="text"
+              name="productsSupplied"
+              required
+              value={formData.productsSupplied}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </div>
+
           <div className="flex justify-end gap-4 pt-4">
             <button
               type="button"
@@ -172,13 +215,11 @@ export default function VendorForm() {
 
             <button
               type="submit"
-              disabled={loading}
               className="px-6 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
             >
-              {loading ? "Saving..." : "Add Vendor"}
+              {isEditMode ? "Update Vendor" : "Add Vendor"}
             </button>
           </div>
-
         </form>
       </div>
     </div>

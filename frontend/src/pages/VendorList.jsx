@@ -11,6 +11,7 @@ export default function VendorList() {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const limit = 10;
 
@@ -39,22 +40,19 @@ export default function VendorList() {
     }
   };
 
-  const handleDeleteVendor = async (vendorId) => {
-    if (!window.confirm("Are you sure you want to delete this vendor?"))
-      return;
+  const handleDelete = (id) => {
+  const pro = api.delete(`/vendors/${id}`);
 
-    try {
-      await api.delete(`/vendors/${vendorId}`);
-
-      if (vendors.length === 1 && page > 1) {
-        setPage((prev) => prev - 1);
-      } else {
-        fetchVendors(page);
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete vendor");
-    }
-  };
+  showPromise(pro, {
+    loading: "Deleting vendor...",
+    success: "Vendor deleted!",
+    error: (err) =>
+      err.response?.data?.message || "Delete failed",
+  }).then(() => {
+    setConfirmDeleteId(null);
+    fetchVendors();
+  });
+};
 
   return (
     <div className="bg-gray-100 min-h-screen font-sans">
@@ -149,17 +147,37 @@ export default function VendorList() {
                         }
                         className="text-blue-600 p-2 rounded hover:bg-gray-100"
                       >
-                        <Edit2 size={16} />
+                        <Edit2 size={18} />
                       </button>
 
                       <button
-                        onClick={() =>
-                          handleDeleteVendor(vendor._id)
-                        }
-                        className="text-red-600 p-2 rounded hover:bg-gray-100"
+                        onClick={() => setConfirmDeleteId(vendor._id)}
+                        className="text-red-600"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={18}/>
                       </button>
+
+                      {confirmDeleteId === vendor._id && (
+                        <div className="absolute bg-white border rounded shadow-lg p-3 z-10">
+                          <p className="text-sm mb-2">
+                            Delete this vendor?
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleDelete(vendor._id)}
+                              className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-3 py-1 bg-gray-300 rounded text-sm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))

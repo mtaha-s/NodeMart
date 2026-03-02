@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import ManageUsers from './pages/ManageUser.jsx';
 import InventoryList from './pages/InventoryList.jsx';
 import InventoryForm from './pages/InventoryForm.jsx';
+import InventoryView from './pages/InventoryView.jsx';
 import VendorList from './pages/VendorList.jsx';
 import VendorForm from './pages/VendorForm.jsx';
 import PurchaseInvoice from './pages/PurchaseInvoice.jsx';
@@ -41,15 +42,16 @@ function App() {
             {/* Inventory nested routes */}
             <Route path="inventory">
               <Route path="list" element={<InventoryList />} />
-              <Route path="add" element={<InventoryForm />} />
-              {/* {* <Route path="edit/:id" element={<InventoryForm />} /> */}
+              <Route path="add" element={<InventoryForm mode="add"/>} />
+              <Route path="view/:id" element={<InventoryView/>} />
+              <Route path="edit/:id" element={<InventoryForm mode="edit"/>} />
             </Route>
           
             {/* Vendor routes */}
             <Route path="vendor">
               <Route path="list" element={<VendorList />} />
               <Route path="add" element={<VendorForm />} />
-              {/*<Route path="edit/:id" element={<VendorForm />} /> */}
+              <Route path="edit/:id" element={<VendorForm />} />
             </Route>
 
             {/* Purchase Invoice */}

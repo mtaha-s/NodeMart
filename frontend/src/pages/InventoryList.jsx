@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { FaEdit } from "react-icons/fa";
 import { Trash2, Plus, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api"; // ✅ import axios instance
+import api from "../services/api";
+import { showPromise } from "../services/toast";
 
 export default function InventoryList() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function InventoryList() {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const limit = 10;
 
@@ -19,7 +21,6 @@ export default function InventoryList() {
       setLoading(true);
       setError("");
 
-      // ✅ axios GET
       const res = await api.get(
         `/inventories?page=${pageNumber}&limit=${limit}`
       );
@@ -31,7 +32,6 @@ export default function InventoryList() {
       setTotalPages(result.totalPages || 1);
 
     } catch (err) {
-      console.error(err);
       setError(err.response?.data?.message || "Failed to fetch inventories");
     } finally {
       setLoading(false);
@@ -42,25 +42,33 @@ export default function InventoryList() {
     fetchInventories(page);
   }, [page]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this inventory?"))
-      return;
+  // ✅ FIXED EDIT
+  const handleEdit = (id) => {
+    const pro = api.get(`/inventories/${id}`);
 
-    try {
-      // ✅ axios DELETE
-      await api.delete(`/inventories/${id}`);
+    showPromise(pro, {
+      loading: "Fetching Inventory Item...",
+      success: "Item loaded!",
+      error: (err) =>
+        err.response?.data?.message || "Failed to GET Item",
+    }).then(() => {
+      navigate(`/inventory/edit/${id}`);
+    });
+  };
 
-      alert("Inventory deleted successfully");
+  // ✅ IMPROVED DELETE
+  const handleDelete = (id) => {
+    const pro = api.delete(`/inventories/${id}`);
 
-      if (inventories.length === 1 && page > 1) {
-        setPage((prev) => prev - 1);
-      } else {
-        fetchInventories(page);
-      }
-
-    } catch (err) {
-      alert(err.response?.data?.message || "Delete failed");
-    }
+    showPromise(pro, {
+      loading: "Deleting inventory...",
+      success: "Inventory deleted!",
+      error: (err) =>
+        err.response?.data?.message || "Delete failed",
+    }).then(() => {
+      setConfirmDeleteId(null);
+      fetchInventories(page);
+    });
   };
 
   return (
@@ -92,34 +100,19 @@ export default function InventoryList() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Image
-                  </th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Item Code
-                  </th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Name
-                  </th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Vendor
-                  </th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Quantity
-                  </th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Cost Price
-                  </th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Retail Price
-                  </th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                    Actions
-                  </th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Image</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Item Code</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Name</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Category</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Vendor</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Quantity</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Cost</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Retail</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Actions</th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-200">
+              <tbody>
                 {inventories.map((item) => (
                   <tr key={item._id}>
                     <td className="px-4 py-2">
@@ -130,74 +123,59 @@ export default function InventoryList() {
                       />
                     </td>
 
-                    <td className="px-4 py-2 text-sm">{item.itemCode}</td>
-                    <td className="px-4 py-2 text-sm">{item.itemName}</td>
-                    <td className="px-4 py-2 text-sm">
+                    <td className="px-4 py-2">{item.itemCode}</td>
+                    <td className="px-4 py-2">{item.itemName}</td>
+                    <td className="px-4 py-2">{item.category}</td>
+                    <td className="px-4 py-2">
                       {item.vendor?.fullName || "No Vendor"}
                     </td>
-                    <td className="px-4 py-2 text-sm">{item.quantity}</td>
-                    <td className="px-4 py-2 text-sm">₹ {item.costPrice}</td>
-                    <td className="px-4 py-2 text-sm">₹ {item.retailPrice}</td>
+                    <td className="px-4 py-2">{item.quantity}</td>
+                    <td className="px-4 py-2">₹ {item.costPrice}</td>
+                    <td className="px-4 py-2">₹ {item.retailPrice}</td>
 
-                    <td className="px-4 py-2 text-sm flex gap-3">
+                    <td className="px-4 py-2 flex gap-3">
                       <button
-                        onClick={() => alert(JSON.stringify(item, null, 2))}
-                        className="p-2 rounded hover:bg-gray-100"
+                        onClick={() => navigate(`/inventory/view/${item._id}`)}
                       >
                         <Eye className="w-5 h-5 text-blue-600" />
                       </button>
 
                       <button
-                        onClick={() =>
-                          navigate(`/inventory/edit/${item._id}`)
-                        }
-                        className="p-2 rounded hover:bg-gray-100"
+                        onClick={() => handleEdit(item._id)}
                       >
                         <FaEdit className="w-5 h-5 text-green-600" />
                       </button>
 
                       <button
-                        onClick={() => handleDelete(item._id)}
-                        className="p-2 rounded hover:bg-gray-100"
+                        onClick={() => setConfirmDeleteId(item._id)}
                       >
                         <Trash2 className="w-5 h-5 text-red-600" />
                       </button>
+
+                      {confirmDeleteId === item._id && (
+                        <div className="absolute bg-white border rounded shadow-lg p-3 z-10">
+                          <p className="text-sm mb-2">Delete this inventory?</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleDelete(item._id)}
+                              className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-3 py-1 bg-gray-300 rounded text-sm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex justify-end mt-4 gap-2">
-            <button
-              onClick={() => setPage((prev) => prev - 1)}
-              disabled={page === 1}
-              className={`px-3 py-1 rounded border ${
-                page === 1
-                  ? "bg-gray-200 cursor-not-allowed"
-                  : "bg-white hover:bg-gray-100"
-              }`}
-            >
-              Prev
-            </button>
-
-            <span className="px-3 py-1 text-gray-700">
-              Page {page} of {totalPages}
-            </span>
-
-            <button
-              onClick={() => setPage((prev) => prev + 1)}
-              disabled={page === totalPages}
-              className={`px-3 py-1 rounded border ${
-                page === totalPages
-                  ? "bg-gray-200 cursor-not-allowed"
-                  : "bg-white hover:bg-gray-100"
-              }`}
-            >
-              Next
-            </button>
           </div>
         </>
       )}
