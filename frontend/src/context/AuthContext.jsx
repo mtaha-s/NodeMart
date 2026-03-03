@@ -41,7 +41,6 @@ export function AuthProvider({ children }) {
   };
 
   // 🔹 Login
-  // 🔹 Login
 const login = async (email, password) => {
   return api.post("/auth/login", { email, password })
     .then((res) => {

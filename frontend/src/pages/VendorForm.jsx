@@ -109,13 +109,12 @@ export default function VendorForm() {
             : "Add new vendor information below."}
         </p>
 
-        {error && (
+        {error ? (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-6">
             {error}
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-8">
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block mb-1 text-sm font-medium">
@@ -158,6 +157,7 @@ export default function VendorForm() {
                 value={formData.email}
                 onChange={handleChange}
                 className={inputClass}
+                readOnly
               />
             </div>
 
@@ -221,6 +221,7 @@ export default function VendorForm() {
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

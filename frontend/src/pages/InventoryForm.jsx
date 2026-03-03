@@ -272,6 +272,7 @@ export default function InventoryForm({mode}) {
                 value={formData.quantity}
                 onChange={handleChange}
                 required
+                readOnly
                 className={inputClass}
               />
             </div>

@@ -2,7 +2,6 @@ import React, { useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { Camera, Lock } from "lucide-react";
-import Breadcrumbs from "../services/BreadCrumbs";
 import toast, { Toaster } from "react-hot-toast";
 import AvatarCropModal from "../components/AvatarCropModel";
 import getCroppedImg from "../services/cropImage";
@@ -86,11 +85,10 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4">
-      <Breadcrumbs />
+    <div className="min-h-screen bg-gray-100">
       <div className="max-w-full bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* HEADER */}
-        <div className="bg-linear-to-r from-[#49AD5E] to-[#2B9CCF] h-32 relative">
+        <div className="bg-linear-to-r from-[#49AD5E] to-[#2B9CCF] h-40 relative">
           <div className="absolute -bottom-16 left-8">
             <div className="relative w-32 h-32">
               <img
